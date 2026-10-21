@@ -29,8 +29,8 @@ button{font:inherit;font-weight:600;min-height:48px;padding:0 22px;border:0;bord
 <h1>Antrian LA</h1><p class="s">Control Tower antrian muat. Pilih peran Anda.</p>
 
 <section id="setup" class="box" hidden>
-  <b>Hubungkan sekali saja</b>
-  <p class="s" style="margin:4px 0 0">Tempel link web app Apps Script (berakhiran <code>/exec</code>). Link disimpan di browser ini.</p>
+  <b>Ganti link web app</b>
+  <p class="s" style="margin:4px 0 0">Tempel link web app Apps Script (berakhiran <code>/exec</code>) bila Anda membuat deploy baru. Link disimpan di browser ini.</p>
   <input id="u" type="url" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/.../exec">
   <div class="err" id="e"></div>
   <button id="save">Simpan</button>
@@ -38,7 +38,7 @@ button{font:inherit;font-weight:600;min-height:48px;padding:0 22px;border:0;bord
 
 <section id="menu" hidden>
   <div class="g" id="g"></div>
-  <p class="ft">Terhubung ke web app Anda. <a id="ch" role="button" tabindex="0">Ubah link</a></p>
+  <p class="ft"><a id="ch" role="button" tabindex="0">Ubah link</a></p>
 </section>
 </main>
 <script>
@@ -47,11 +47,12 @@ juru:['Juru muat','Mulai muat sesuai giliran','M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2
 checker:['Checker','Terima dan selesaikan muatan','M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'],
 dashboard:['Dashboard','Urutan datang vs urutan muat','M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z']};
 var K='antrian_la_url';
-function get(){try{return localStorage.getItem(K)||'';}catch(e){return '';}}
+var DEF='https://script.google.com/macros/s/AKfycbxGzIARGAK7lKye6LNGgqKzVgSHUniZWhblGvF3IzsVkzDX6YmPfVvcn5ZhZNXHynBF/exec'; /* link bawaan; bisa diganti lewat "Ubah link" */
+function get(){try{return localStorage.getItem(K)||DEF;}catch(e){return DEF;}}
 function put(v){try{localStorage.setItem(K,v);}catch(e){}}
 function link(u,p,x){return u+(u.indexOf('?')<0?'?':'&')+'page='+p+(x||'');}
-function show(){
-  var u=get(),ok=/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(u);
+function show(edit){
+  var u=get(),ok=/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(u)&&edit!==true;
   document.getElementById('setup').hidden=ok;document.getElementById('menu').hidden=!ok;
   if(!ok)return;
   var g=document.getElementById('g');g.textContent='';
@@ -67,7 +68,7 @@ document.getElementById('save').onclick=function(){
   if(!/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(v)){e.textContent='Link harus diawali https://script.google.com/ . Salin dari Deploy > Web app.';return;}
   e.textContent='';put(v.replace(/[?#].*$/,''));show();
 };
-function chg(){try{localStorage.removeItem(K);}catch(e){}document.getElementById('u').value='';show();}
+function chg(){document.getElementById('u').value=get();show(true);}
 var ch=document.getElementById('ch');ch.onclick=chg;ch.onkeydown=function(e){if(e.key==='Enter'||e.key===' ')chg();};
 show();
 </script></body></html>
