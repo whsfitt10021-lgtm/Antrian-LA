@@ -79,4 +79,15 @@ th{font-size:11px;color:var(--mu);border-top:0}
  .fab{bottom:76px;right:16px}
  .toast{bottom:130px}
 }
+.ov{animation:fd .18s ease-out}
+.sheet{animation:up .24s cubic-bezier(.2,.8,.2,1)}
+.toast{animation:fd .18s ease-out}
+.car{animation:fd .2s ease-out;content-visibility:auto;contain-intrinsic-size:auto 74px}
+.btn{transition:transform .08s,opacity .15s,background-color .15s}
+.btn:active:not(:disabled){transform:scale(.96)}
+.sk{height:56px;border-radius:10px;background:#e8eaed;margin:10px 0;animation:pu 1.2s ease-in-out infinite}
+@keyframes fd{from{opacity:0}}
+@keyframes up{from{transform:translateY(28px);opacity:0}}
+@keyframes pu{50%{opacity:.5}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>

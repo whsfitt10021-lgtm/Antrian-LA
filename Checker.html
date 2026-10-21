@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><base target="_top"><meta charset="utf-8"><title>Checker</title>
+<html><head><base target="_top"><meta charset="utf-8"><link rel="preconnect" href="https://unpkg.com" crossorigin><title>Checker</title>
 <?!= include('Style') ?>
 </head><body>
 <?!= navHtml(page) ?>
@@ -10,14 +10,16 @@
 <?!= include('Lib') ?>
 <script>
 function App(){
-  var L=useLive(function(){return call('apiView','checker');},15000);
+  var L=useLive(function(){return call('apiView','checker');},15000,'chk');
   var tt=useToast(),toast=tt[1],D=useDo(L,toast);
   var d=L.st.d||{},pl=usePelaku(d.users,'pelaku_chk');
   var cf=useState(null);
   var c=cf[0],rc=c&&c.status==='LOADING';
   function go(){
-    D.go(c.id,'apiAct',{action:rc?'receive':'done',id:c.id,pelaku:pl[0],page:'checker'},
-      'Berhasil. '+c.nopol+(rc?' diterima.':' selesai.')).then(function(r){if(r)cf[1](null);});
+    var cur=c,isRc=rc;cf[1](null);
+    D.go(cur.id,'apiAct',{action:isRc?'receive':'done',id:cur.id,pelaku:pl[0],page:'checker'},
+      'Berhasil. '+cur.nopol+(isRc?' diterima.':' selesai.'),
+      function(x){return patchList(x,cur.id,function(k){return isRc?Object.assign({},k,{status:'RECEIVED',receive:clock().replace('.',':'),mnt:0}):null;});});
   }
   return h`<${Shell} title="Checker" live=${L} toast=${tt[0]}>
     <section class="box"><${Who} users=${d.users} value=${pl[0]} set=${pl[1]}/>

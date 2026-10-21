@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><base target="_top"><meta charset="utf-8"><title>Juru muat</title>
+<html><head><base target="_top"><meta charset="utf-8"><link rel="preconnect" href="https://unpkg.com" crossorigin><title>Juru muat</title>
 <?!= include('Style') ?>
 </head><body>
 <?!= navHtml(page) ?>
@@ -10,14 +10,14 @@
 <?!= include('Lib') ?>
 <script>
 function App(){
-  var L=useLive(function(){return call('apiView','juru');},15000);
+  var L=useLive(function(){return call('apiView','juru');},15000,'juru');
   var tt=useToast(),toast=tt[1],D=useDo(L,toast);
   var d=L.st.d||{},pl=usePelaku(d.users,'pelaku_juru');
   var cf=useState(null),why=useState('');
   function start(c,alasan){
-    D.go(c.id,'apiAct',{action:'start',id:c.id,pelaku:pl[0],page:'juru',alasan:alasan||''},'Berhasil. '+c.nopol+' mulai dimuat.').then(function(r){
-      if(r){cf[1](null);why[1]('');}
-    });
+    cf[1](null);why[1]('');   /* tutup panel langsung; tampilan sudah diperbarui sebelum server menjawab */
+    D.go(c.id,'apiAct',{action:'start',id:c.id,pelaku:pl[0],page:'juru',alasan:alasan||''},'Berhasil. '+c.nopol+' mulai dimuat.',
+      function(x){return patchList(x,c.id,function(k){return Object.assign({},k,{status:'LOADING',start:clock().replace('.',':'),mnt:0});});});
   }
   var c=cf[0],skip=c&&d.next&&c.no!==d.next;
   function close(){cf[1](null);why[1]('');}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><base target="_top"><meta charset="utf-8"><title>Security</title>
+<html><head><base target="_top"><meta charset="utf-8"><link rel="preconnect" href="https://unpkg.com" crossorigin><title>Security</title>
 <?!= include('Style') ?>
 </head><body>
 <?!= navHtml(page) ?>
@@ -16,7 +16,7 @@ function App(){
   var L=useLive(function(){
     var f=first.current?'apiSecurityInit':'apiSecurityList';
     return call(f).then(function(d){first.current=false;return d;});
-  },20000);
+  },20000,'sec');
   var tt=useToast(),toast=tt[1];
   var d=L.st.d||{},pl=usePelaku(d.users,'pelaku_sec');
   var q=useState(''),open=useState(false),fm=useState(EMPTY),dup=useState(false),bz=useState(false);
@@ -26,13 +26,21 @@ function App(){
   function submit(paksa){
     if(!pl[0])return toast('Pilih nama petugas dulu.',true);
     if(!f.nopol.trim())return toast('No. polisi wajib diisi.',true);
-    bz[1](true);
+    var keep=f,nopol=f.nopol.toUpperCase().replace(/\s+/g,' ').trim(),key=norm(nopol);
+    if(!paksa&&(d.list||[]).some(function(c){return norm(c.nopol)===key&&c.status!=='COMPLETED';})){dup[1](true);return;}
+    /* tampil langsung di daftar; dikoreksi bila server menolak */
+    L.hold(1);
+    var tmp={id:'tmp'+Date.now(),no:d.next,nopol:nopol,status:'MASUK',sopir:keep.sopir,tujuan:keep.tujuan,masuk:clock().replace('.',':'),mnt:0,exc:false};
+    var prev=L.patch(function(x){return Object.assign({},x,{list:[tmp].concat(x.list||[]),next:p2(Number(x.next)+1)});});
+    close();fm[1](EMPTY);q[1]('');
+    try{if(navigator.vibrate)navigator.vibrate(12);}catch(e){}
+    function back(){L.restore(prev);fm[1](keep);open[1](true);}
     call('apiSecurityEntry',{pelaku:pl[0],nopol:f.nopol,sopir:f.sopir,tujuan:f.tujuan,paksa:!!paksa}).then(function(r){
-      bz[1](false);
-      if(r.dup){dup[1](true);return;}
-      L.put(r.view);close();fm[1](EMPTY);q[1]('');
+      L.hold(-1);
+      if(r.dup){back();dup[1](true);return;}
+      L.put(r.view);
       toast('Berhasil. '+r.nopol+' mendapat antrean '+r.no+'.');
-    },function(e){bz[1](false);toast(e.message,true);});
+    },function(e){L.hold(-1);back();toast(e.message,true);L.run();});
   }
   var Q=norm(q[0]);
   var all=d.list||[];

@@ -21,11 +21,20 @@ function clock(){
 }
 
 /* Data hidup: ambil sekarang, ulang tiap ms (hanya saat tab terlihat), render ulang hanya bila data berubah. */
-function useLive(load,ms){
-  var s=useState({d:null,err:'',busy:false}),st=s[0],set=s[1];
+function todayJkt(){try{return new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Jakarta'});}catch(e){return '';}}
+function useLive(load,ms,key){
+  var s=useState(function(){
+    var c=null;try{c=JSON.parse(store('lv_'+key)||'null');}catch(e){}
+    if(c&&c.tanggal!==todayJkt())c=null;   /* data kemarin tidak ditampilkan */
+    return{d:c,err:'',busy:false};
+  }),st=s[0],set=s[1];
+  var dr=useRef(null),hold=useRef(0);dr.current=st.d;
+  useEffect(function(){if(st.d)store('lv_'+key,JSON.stringify(st.d));},[st.d]);
   var run=useCallback(function(manual){
+    if(hold.current>0)return Promise.resolve();   /* jangan timpa tampilan saat aksi sedang diproses */
     if(manual===true)set(function(x){return Object.assign({},x,{busy:true});});
     return load().then(function(d){
+      if(hold.current>0)return;
       set(function(x){
         var n=Object.assign({},x.d||{},d);
         return(!x.err&&!x.busy&&JSON.stringify(n)===JSON.stringify(x.d))?x:{d:n,err:'',busy:false};
@@ -33,6 +42,15 @@ function useLive(load,ms){
     },function(e){set(function(x){return{d:x.d,err:e.message,busy:false};});});
   },[]);
   var put=useCallback(function(d){set(function(x){return{d:Object.assign({},x.d||{},d),err:'',busy:false};});},[]);
+  /* Perubahan sementara (optimistis): tampil langsung, dikembalikan bila server menolak. */
+  var patch=useCallback(function(fn){
+    var prev=dr.current;if(!prev)return null;
+    var n=fn(prev);dr.current=n;set(function(x){return{d:n,err:x.err,busy:x.busy};});return prev;
+  },[]);
+  var restore=useCallback(function(prev){
+    if(prev){dr.current=prev;set(function(x){return{d:prev,err:x.err,busy:x.busy};});}
+  },[]);
+  var holdBy=useCallback(function(n){hold.current=Math.max(0,hold.current+n);},[]);
   useEffect(function(){
     run();
     var i=setInterval(function(){if(!document.hidden)run();},ms);
@@ -40,7 +58,7 @@ function useLive(load,ms){
     document.addEventListener('visibilitychange',v);
     return function(){clearInterval(i);document.removeEventListener('visibilitychange',v);};
   },[]);
-  return{st:st,run:run,put:put};
+  return{st:st,run:run,put:put,patch:patch,restore:restore,hold:holdBy};
 }
 
 function useToast(){
@@ -55,15 +73,26 @@ function useToast(){
 /* Satu pintu aksi: cegah klik ganda, tampilkan hasil dari server, muat ulang bila gagal. */
 function useDo(L,toast){
   var s=useState(''),busy=s[0],setBusy=s[1];
-  return{busy:busy,go:function(key,fn,arg,okMsg){
+  return{busy:busy,go:function(key,fn,arg,okMsg,opt){
     if(busy)return Promise.resolve();
-    setBusy(key);
+    setBusy(key);L.hold(1);
+    var prev=opt?L.patch(opt):null;
+    try{if(navigator.vibrate)navigator.vibrate(12);}catch(e){}
     return call(fn,arg).then(function(r){
-      setBusy('');if(r&&r.view)L.put(r.view);if(okMsg)toast(okMsg);return r;
-    },function(e){setBusy('');toast(e.message,true);L.run();});
+      L.hold(-1);setBusy('');if(r&&r.view)L.put(r.view);if(okMsg)toast(okMsg);return r;
+    },function(e){
+      L.hold(-1);setBusy('');if(prev)L.restore(prev);toast(e.message,true);L.run();
+    });
   }};
 }
 
+function p2(n){return ('0'+n).slice(-2);}
+/* Ubah satu kartu di daftar (fn mengembalikan null untuk menghapus) lalu hitung ulang giliran berikutnya. */
+function patchList(x,id,fn){
+  var l=(x.list||[]).map(function(c){return c.id===id?fn(c):c;}).filter(Boolean);
+  var w=l.filter(function(c){return c.status==='MASUK';}).map(function(c){return Number(c.no);});
+  return Object.assign({},x,{list:l,next:w.length?p2(Math.min.apply(null,w)):''});
+}
 function usePelaku(users,key){
   var s=useState(store(key)),v=s[0],set=s[1],u=users||[];
   var cur=u.indexOf(v)>=0?v:(u.length===1?u[0]:'');
@@ -86,7 +115,7 @@ function Shell(p){
       </div></header>
     <main class=${p.wide?'wide':''}>
       ${L.st.err?h`<div class="err">${L.st.err}</div>`:null}
-      ${d.tanggal?p.children:(L.st.err?null:h`<p class="mut">Memuat…</p>`)}
+      ${d.tanggal?p.children:(L.st.err?null:h`<div class="box"><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>`)}
     </main>
     <${Toast} t=${p.toast}/>
   </div>`;

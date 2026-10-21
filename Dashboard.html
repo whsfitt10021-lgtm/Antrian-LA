@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><base target="_top"><meta charset="utf-8"><title>Urutan Muat</title>
+<html><head><base target="_top"><meta charset="utf-8"><link rel="preconnect" href="https://unpkg.com" crossorigin><title>Urutan Muat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -122,7 +122,7 @@ function hasil(c){
 
 function App(){
   var up=useState('');
-  var L=useLive(function(){return call('apiView','dashboard').then(function(d){up[1](hm());return d;});},20000);
+  var L=useLive(function(){return call('apiView','dashboard').then(function(d){up[1](hm());return d;});},20000,'dash');
   var cl=useState(hm());
   useEffect(function(){
     var i=setInterval(function(){cl[1](hm());},10000);
