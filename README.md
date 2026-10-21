@@ -1,5 +1,7 @@
 # Antrian LA
 
+**Buka aplikasi:** https://whsfitt10021-lgtm.github.io/Antrian-LA/
+
 Control Tower antrian muat (Google Apps Script + Preact).
 
 ## Isi
@@ -14,5 +16,7 @@ Control Tower antrian muat (Google Apps Script + Preact).
 4. TV: `?page=dashboard&tv=1`.
 
 ## Halaman github.io
+Alamat: https://whsfitt10021-lgtm.github.io/Antrian-LA/
+
 `index.html` adalah gerbang menuju tiap halaman. Aktifkan di GitHub: Settings > Pages > Deploy from a branch > `main` / root.
 Buka halamannya, tempel link web app Apps Script (`.../exec`) satu kali; link diingat di browser.
