@@ -9,6 +9,13 @@ Browser  ──(halaman statis)──▶  GitHub Pages   (index, security, juru,
 Browser  ──(fetch JSON)──────▶  Apps Script     (apps-script/Code.gs, jadi API)  ──▶  Google Sheets
 ```
 
+## Alur & kolom dashboard
+Security catat kedatangan (+ jenis kendaraan) → Juru **Mulai muat** (isi No SPM) → **Selesai muat** → Checker **Mulai check** → **Selesai check** → Security **Check out**.
+
+Kolom dashboard (urut): urutan kedatangan, jam kedatangan, no mobil, urutan mulai muat, jam mulai muat, urutan selesai muat, jam selesai muat, no SPM, tujuan, jenis kendaraan, mulai check, selesai check, security check out. Sel urutan mulai muat hijau = sesuai antrean, merah = tidak sesuai.
+
+Kolom baru di tab `TRANSAKSI` (`Jenis_Kendaraan`, `Urut_Finish`, `Jam_Keluar`, `Security_Keluar`) ditambahkan otomatis; data lama aman.
+
 ## Struktur
 | Path | Isi |
 |---|---|
@@ -29,6 +36,8 @@ Browser  ──(fetch JSON)──────▶  Apps Script     (apps-script/C
 4. Jalankan menu **Control Tower > Setup tab otomatis**, lalu isi nama petugas di tab `USER`.
 5. **Deploy > New deployment > Web app**: Execute as **Me**, Who has access **Anyone**. Salin link `/exec`.
 6. Tempel link itu ke `assets/config.js` (atau lewat "Ubah link" di `index.html`, berlaku per browser).
+
+**Penting:** kalau muncul "Tidak bisa terhubung ke server", biasanya link `/exec` belum di-deploy dengan akses **Anyone**. Tes: buka link `/exec` di jendela incognito, harus tampil `{"ok":true,"app":"Antrian LA API"}` (bukan halaman login Google).
 
 Setiap mengubah `Code.gs`: **Deploy > Manage deployments > Edit > New version** agar link `/exec` tetap sama.
 

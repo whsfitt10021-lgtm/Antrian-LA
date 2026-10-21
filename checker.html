@@ -18,27 +18,27 @@ function App(){
   var tt=useToast(),toast=tt[1],D=useDo(L,toast);
   var d=L.st.d||{},pl=usePelaku(d.users,'pelaku_chk');
   var cf=useState(null);
-  var c=cf[0],rc=c&&c.status==='LOADING';
+  var c=cf[0],rc=c&&c.status==='SELESAI_MUAT';
   function go(){
     var cur=c,isRc=rc;cf[1](null);
     D.go(cur.id,'apiAct',{action:isRc?'receive':'done',id:cur.id,pelaku:pl[0],page:'checker'},
-      'Berhasil. '+cur.nopol+(isRc?' diterima.':' selesai.'),
+      'Berhasil. '+cur.nopol+(isRc?' mulai dicek.':' selesai dicek.'),
       function(x){return patchList(x,cur.id,function(k){return isRc?Object.assign({},k,{status:'RECEIVED',receive:clock().replace('.',':'),mnt:0}):null;});});
   }
   return h`<${Shell} title="Checker" live=${L} toast=${tt[0]}>
     <section class="box"><${Who} users=${d.users} value=${pl[0]} set=${pl[1]}/>
-      <p class="pt" style="margin:0">Loading selesai? Tekan <b>Terima</b>. Setelah dicek, tekan <b>Selesai</b>.</p></section>
+      <p class="pt" style="margin:0">Muatan selesai? Tekan <b>Mulai check</b>. Setelah selesai dicek, tekan <b>Selesai check</b>.</p></section>
     <section class="box">
       ${(d.list||[]).length?(d.list||[]).map(function(x){
-        var r=x.status==='LOADING';
+        var r=x.status==='SELESAI_MUAT';
         return h`<${Car} key=${x.id} c=${x}>
-          <button class="btn s" disabled=${!pl[0]||D.busy===x.id} onClick=${function(){cf[1](x);}}>${r?'Terima':'Selesai'}</button>
+          <button class="btn s" disabled=${!pl[0]||D.busy===x.id} onClick=${function(){cf[1](x);}}>${r?'Mulai check':'Selesai check'}</button>
         </${Car}>`;
       }):h`<p class="mut" style="margin:0">Belum ada mobil yang perlu dicek.</p>`}
     </section>
-    ${c?h`<${Confirm} title=${(rc?'Terima ':'Tandai selesai ')+c.nopol+'?'} okLabel=${rc?'Ya, terima':'Ya, selesai'} busy=${D.busy===c.id}
+    ${c?h`<${Confirm} title=${(rc?'Mulai check ':'Selesai check ')+c.nopol+'?'} okLabel=${rc?'Ya, mulai check':'Ya, selesai check'} busy=${D.busy===c.id}
         onClose=${function(){cf[1](null);}} onOk=${go}
-        text=${rc?'Pastikan muatan sudah selesai dan sesuai. Waktu terima dicatat sekarang.':'Mobil ini akan ditandai selesai dan keluar dari daftar.'}/>`:null}
+        text=${rc?'Waktu mulai check dicatat sekarang.':'Check selesai. Mobil lalu menunggu check out oleh Security.'}/>`:null}
   </${Shell}>`;
 }
 preact.render(h`<${App}/>`,document.getElementById('app'));

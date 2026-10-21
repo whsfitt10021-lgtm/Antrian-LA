@@ -28,9 +28,10 @@ body{margin:0;height:100vh;overflow:hidden;display:grid;grid-template-columns:ca
 .ck span{font-size:1.6rem;color:var(--mut);letter-spacing:.12em}
 .off{background:#fbe9e7;color:#b3261e;padding:.5rem 1.4rem;font-size:1.6rem;flex:none;letter-spacing:.06em;border-radius:.6rem}
 .bd{flex:1;min-height:0;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:1rem;overflow:hidden}
-.cols,.rw{display:grid;grid-template-columns:9rem 20rem 10rem 11rem 10rem minmax(0,1fr);align-items:center;column-gap:1.2rem;padding:0 1.6rem}
-.cols{flex:none;background:#e6ecf4;color:var(--navy);font-size:1.35rem;letter-spacing:.14em;text-transform:uppercase;height:4rem;font-weight:600;border-bottom:1px solid var(--line)}
-.cols i{display:block;font-style:normal;font-size:1rem;color:var(--mut);letter-spacing:.14em;font-weight:500;margin-top:.1rem}
+.cols,.rw{display:grid;grid-template-columns:6.3rem 6.2rem 13rem 6.3rem 6.2rem 6.3rem 6.2rem 8.5rem minmax(7rem,1fr) 9rem 6.2rem 6.2rem 6.6rem;align-items:center;column-gap:.8rem;padding:0 1rem}
+.cols{flex:none;background:#e6ecf4;color:var(--navy);font-size:1.15rem;line-height:1.1;font-weight:700;height:5.4rem;align-items:end;padding-bottom:.7rem;border-bottom:1px solid var(--line)}
+.cols>div{white-space:normal}
+.cols>.u,.rw>.u{text-align:center}
 .sc{flex:1;min-height:0;overflow-y:auto;scroll-behavior:smooth}
 .tvm body{grid-template-columns:1fr}
 .tvm .nav,.tvm .fs{display:none}
@@ -44,22 +45,17 @@ body{margin:0;height:100vh;overflow:hidden;display:grid;grid-template-columns:ca
 .fs:hover,.exit:hover{background:#e6ecf4}
 .exit{position:fixed;bottom:1.6rem;right:2.4rem;z-index:5;box-shadow:0 .2rem .8rem #0003}
 
-.rw{height:var(--rh,4.2rem);border-bottom:1px solid #e6ebf1}
+.rw{height:var(--rh,4.2rem);border-bottom:1px solid #e6ebf1;font-size:2rem}
 .rw:nth-child(even){background:#f6f8fb}
 .rw>div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rw .no{font-size:2.8rem;font-weight:700;color:var(--navy)}
-.rw .pl{font-size:2.9rem;font-weight:700;letter-spacing:.04em}
-.rw .tj{color:#46515f}
-.rw .rs{display:flex;align-items:center;gap:1.2rem;overflow:visible}
-.rw .rs .tx{font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:1.8rem;padding:.4rem 1.4rem;border-radius:999px;color:var(--c);background:var(--b)}
-.rw .rs .dt{font-size:1.9rem;color:#46515f}
-.rw .rs em{font-style:normal;font-size:1.3rem;letter-spacing:.1em;color:var(--navy);border:.1rem solid var(--navy);padding:.1rem .7rem;border-radius:.3rem}
-.rw .mk{font-size:2.8rem;font-weight:700}
-.t-SESUAI{--c:#1b6e45;--b:#ddf1e5}
-.t-LOMPAT,.t-TERTUNDA,.t-BEDA_URUT{--c:#a3321f;--b:#fbe4df}
-.t-WAIT{--c:#667385;--b:#eceff3}
+.rw .u{font-size:2.3rem;font-weight:700;color:var(--navy)}
+.rw .u i{font-style:normal;display:inline-block;min-width:4.2rem;padding:.15rem .5rem;border-radius:.7rem}
+.rw .u i.ok{background:#ddf1e5;color:#1b6e45}
+.rw .u i.bad{background:#fbe4df;color:#a3321f}
+.rw .pl{font-size:2.35rem;font-weight:700;letter-spacing:.02em}
+.rw .mt{color:#9aa3af}
 .rw.nxt{background:#fff8e1}
-.rw.nxt .tx{color:#9a5b00;background:#fdf0d5}
+.rw.dn{opacity:.55}
 .ft{flex:none;display:grid;grid-template-columns:repeat(5,1fr) auto;gap:1.2rem;align-items:end;background:#fff;border:1px solid var(--line);border-radius:1rem;padding:1rem 1.6rem}
 .ft div{line-height:1}
 .ft b{display:block;font-size:3.8rem;font-weight:700;color:var(--ink)}
@@ -70,24 +66,18 @@ body{margin:0;height:100vh;overflow:hidden;display:grid;grid-template-columns:ca
 .ft .up{font-size:1.25rem;color:var(--mut);letter-spacing:.1em;text-align:right}
 .emp{padding:4rem;text-align:center;color:var(--mut);font-size:2.6rem}
 @media(max-width:720px){
- html,html.tvm{font-size:2.8vw}
+ html,html.tvm{font-size:2.6vw}
  body{display:block;height:auto;overflow:auto;padding-bottom:64px}
- .pg{height:auto;min-height:100vh;padding:1.2rem 1.4rem}
+ .pg{height:auto;min-height:100vh;padding:2rem 1.6rem}
  .nav{position:fixed;left:0;right:0;bottom:0;top:auto;height:60px;flex-direction:row;justify-content:space-around;padding:4px;z-index:10;border-right:0;border-top:1px solid #e0e3e7}
  .nav a{flex-direction:column;gap:2px;padding:4px 10px;font-size:11px;border-radius:10px}
- .hd{flex-wrap:wrap;gap:1rem}.hd h1{font-size:3.4rem}.hd h1 small{display:none}
- .nx{margin-left:0;padding:.3rem 1rem}.nx b{font-size:3.4rem}.nx span{font-size:1.2rem}
- .ck b{font-size:3.6rem}.ck span{font-size:1.2rem}.fs{display:none}
- .bd{flex:none}.sc{overflow:visible}
- .cols{display:none}
- .rw{display:grid;grid-template-columns:4.2rem minmax(0,1fr) auto;grid-template-areas:"no pl rs" "no mk rs";column-gap:1rem;row-gap:.2rem;height:auto;min-height:5.6rem;padding:.7rem 1rem;align-items:center}
- .rw>div:nth-child(3),.rw>div:nth-child(4){display:none}
- .rw .no{grid-area:no;font-size:2.8rem}.rw .pl{grid-area:pl;font-size:2.4rem;letter-spacing:.02em}
- .rw .mk{grid-area:mk;font-size:1.4rem;font-weight:500;color:var(--mut)}.rw .mk::before{content:'Muat ke-'}
- .rw .rs{grid-area:rs;flex-direction:column;align-items:flex-end;gap:.4rem}
- .rw .rs .tx{font-size:1.2rem;padding:.3rem .9rem;white-space:normal;max-width:11rem;line-height:1.05;text-align:center;letter-spacing:.04em}
- .rw .rs .dt{display:block;font-size:1.3rem}.rw .rs em{display:none}
- .ft{grid-template-columns:repeat(3,1fr);row-gap:1rem}.ft b{font-size:3rem}.ft span{font-size:1.05rem;letter-spacing:.06em}.ft .up{grid-column:1/-1;text-align:left}
+ .hd{flex-wrap:wrap;gap:1.4rem}.hd h1{font-size:4.4rem}.hd h1 small{display:none}
+ .nx{margin-left:0;padding:.4rem 1.4rem}.nx b{font-size:4.2rem}.nx span{font-size:1.4rem}
+ .ck b{font-size:4.4rem}.ck span{font-size:1.5rem}.fs{display:none}
+ .bd{flex:none;overflow-x:auto;-webkit-overflow-scrolling:touch}
+ .cols,.rw{min-width:104rem}
+ .sc{overflow:visible;flex:none}
+ .ft{grid-template-columns:repeat(3,1fr);row-gap:1.4rem}.ft b{font-size:4rem}.ft span{font-size:1.4rem;letter-spacing:.06em}.ft .up{grid-column:1/-1;text-align:left;font-size:1.4rem}
 }
 </style>
 </head><body>
@@ -116,15 +106,14 @@ function usePaging(ref,dep,on){
   },[dep,on]);
 }
 
-/* Hasil per mobil: sesuai bila urutan muat sama dengan urutan datang. */
+/* Sesuai bila urutan mulai muat sama dengan urutan kedatangan. */
 function hasil(c){
-  if(c.tanda==='SESUAI')return{k:'SESUAI',t:'Sesuai',d:''};
-  if(c.tanda==='LOMPAT'||c.tanda==='TERTUNDA'||c.tanda==='BEDA_URUT'){
-    var n=Math.abs(c.selMuat||0),d=c.selMuat<0?'Maju '+n+' antrean':c.selMuat>0?'Mundur '+n+' antrean':'Urutan berbeda';
-    return{k:c.tanda,t:'Tidak sesuai',d:d};
-  }
-  return{k:'WAIT',t:'Belum muat',d:''};
+  if(c.tanda==='SESUAI')return 'ok';
+  if(c.tanda==='LOMPAT'||c.tanda==='TERTUNDA'||c.tanda==='BEDA_URUT')return 'bad';
+  return '';
 }
+function cell(v){return v?v:h`<span class="mt">–</span>`;}
+function num(v){return v!=null?p2(v):h`<span class="mt">–</span>`;}
 
 function App(){
   var up=useState('');
@@ -179,27 +168,27 @@ function App(){
   var wait=all.filter(function(c){return c.status==='MASUK';}).map(function(c){return Number(c.no);});
   var nextN=wait.length?Math.min.apply(null,wait):null;
   var ok=0,bad=0,blm=0;
-  all.forEach(function(c){var k=hasil(c).k;if(k==='SESUAI')ok++;else if(k==='WAIT')blm++;else bad++;});
+  all.forEach(function(c){var k=hasil(c);if(k==='ok')ok++;else if(k==='bad')bad++;else blm++;});
   var pct=(ok+bad)?Math.round(ok*100/(ok+bad)):null;
   var tiles=[['Total mobil',all.length,'',''],['Sesuai urutan',ok,'','ok'],['Tidak sesuai',bad,'',bad>0?'bad':''],['Belum muat',blm,'',''],['Tingkat kesesuaian',pct==null?'–':pct,pct==null?'':'%',pct!=null&&pct<80?'bad':'ok']];
   return h`<div class=${'pg'+(tv&&!mv?' hide-cur':'')}>
-    <div class="hd"><h1>Urutan Muat<small>URUTAN DATANG DIBANDINGKAN URUTAN MUAT AKTUAL</small></h1>
+    <div class="hd"><h1>Urutan Muat<small>HIJAU = URUTAN MULAI MUAT SESUAI KEDATANGAN · MERAH = TIDAK SESUAI</small></h1>
       <div class="nx"><span>Giliran<br/>berikutnya</span><b>${nextN==null?'–':p2(nextN)}</b></div>
       <div class="ck"><b>${cl[0]}</b><span>${d.tanggal||''}</span></div>
       <button class="fs" onClick=${enter}>Layar penuh (TV)</button></div>
     ${tv&&mv?h`<button class="exit" onClick=${leave}>Keluar layar penuh · Esc</button>`:null}
     ${L.st.err?h`<div class="off">KONEKSI TERPUTUS · MENAMPILKAN DATA TERAKHIR</div>`:null}
     <div class="bd">
-      <div class="cols"><div>Antrean<i>DATANG KE-</i></div><div>No. polisi<i>PLATE</i></div><div>Masuk<i>ARRIVED</i></div><div>Mulai muat<i>START</i></div><div>Muat ke-<i>LOADED #</i></div><div>Hasil<i>RESULT</i></div></div>
+      <div class="cols"><div class="u">Urutan kedatangan</div><div>Jam kedatangan</div><div>No mobil</div><div class="u">Urutan mulai muat</div><div>Jam mulai muat</div><div class="u">Urutan selesai muat</div><div>Jam selesai muat</div><div>No SPM</div><div>Tujuan</div><div>Jenis kendaraan</div><div>Mulai check</div><div>Selesai check</div><div>Security check out</div></div>
       <div class="sc" ref=${ref}>
         ${list.length?list.map(function(c){
-          var r=hasil(c),nx=nextN!=null&&Number(c.no)===nextN;
-          return h`<div key=${c.id} class=${'rw'+(nx?' nxt':'')}>
-            <div class="no">${c.no}</div><div class="pl">${c.nopol}</div>
-            <div>${c.masuk||'–'}</div><div>${c.start||'–'}</div>
-            <div class="mk">${c.urutMuat!=null?p2(c.urutMuat):'–'}</div>
-            <div class=${'rs t-'+r.k}>${nx?h`<span class="tx">Giliran berikutnya</span>`:h`<span class="tx">${r.t}</span>`}
-              ${!nx&&r.d?h`<span class="dt">${r.d}</span>`:null}${c.status==='LOADING'?h`<em>SEDANG MUAT</em>`:null}</div></div>`;
+          var nx=nextN!=null&&Number(c.no)===nextN;
+          return h`<div key=${c.id} class=${'rw'+(nx?' nxt':'')+(c.status==='KELUAR'?' dn':'')}>
+            <div class="u"><i>${c.no}</i></div><div>${cell(c.masuk)}</div><div class="pl">${c.nopol}</div>
+            <div class="u"><i class=${hasil(c)}>${num(c.urutMuat)}</i></div><div>${cell(c.start)}</div>
+            <div class="u"><i>${num(c.urutFin)}</i></div><div>${cell(c.finish)}</div>
+            <div>${cell(c.spm)}</div><div>${cell(c.tujuan)}</div><div>${cell(c.jenis)}</div>
+            <div>${cell(c.receive)}</div><div>${cell(c.completed)}</div><div>${cell(c.keluar)}</div></div>`;
         }):h`<div class="emp">${d.tanggal?'BELUM ADA KENDARAAN HARI INI':'MEMUAT…'}</div>`}
       </div>
     </div>
