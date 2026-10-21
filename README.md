@@ -12,3 +12,7 @@ Control Tower antrian muat (Google Apps Script + Preact).
 2. Jalankan menu Control Tower > Setup tab otomatis, lalu Perbarui REKAP.
 3. Deploy sebagai Web app. Halaman: `?page=security|juru|checker|dashboard`.
 4. TV: `?page=dashboard&tv=1`.
+
+## Halaman github.io
+`index.html` adalah gerbang menuju tiap halaman. Aktifkan di GitHub: Settings > Pages > Deploy from a branch > `main` / root.
+Buka halamannya, tempel link web app Apps Script (`.../exec`) satu kali; link diingat di browser.
