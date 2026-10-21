@@ -1,5 +1,5 @@
 var h=htm.bind(preact.h),hk=preactHooks,useState=hk.useState,useEffect=hk.useEffect,useRef=hk.useRef,useCallback=hk.useCallback;
-var STATUS={MASUK:'Menunggu',SPM_DIBAGI:'SPM dibagi',LOADING:'Loading',SELESAI_MUAT:'Selesai muat',RECEIVED:'Diterima',COMPLETED:'Selesai'};
+var STATUS={MASUK:'Menunggu',SPM_DIBAGI:'SPM dibagi',LOADING:'Loading',SELESAI_MUAT:'Selesai muat',RECEIVED:'Sedang dicek',COMPLETED:'Selesai dicek',KELUAR:'Keluar'};
 var REFRESH='M17.65 6.35A7.96 7.96 0 0012 4a8 8 0 108 8h-2a6 6 0 11-1.76-4.24L13 11h7V4l-2.35 2.35z';
 
 /* API: Apps Script web app. Alamat bawaan di assets/config.js, bisa diganti dari index.html (disimpan di browser). */
@@ -111,8 +111,9 @@ function useDo(L,toast){
 
 function p2(n){return ('0'+n).slice(-2);}
 /* Ubah satu kartu di daftar (fn mengembalikan null untuk menghapus) lalu hitung ulang giliran berikutnya. */
-function patchList(x,id,fn){
+function patchList(x,id,fn,keepNext){
   var l=(x.list||[]).map(function(c){return c.id===id?fn(c):c;}).filter(Boolean);
+  if(keepNext)return Object.assign({},x,{list:l});
   var w=l.filter(function(c){return c.status==='MASUK';}).map(function(c){return Number(c.no);});
   return Object.assign({},x,{list:l,next:w.length?p2(Math.min.apply(null,w)):''});
 }
@@ -175,14 +176,14 @@ function Who(p){
 }
 
 function Car(p){
-  var c=p.c,t=[['Masuk',c.masuk],['Mulai',c.start],['Terima',c.receive]].filter(function(x){return x[1];});
+  var c=p.c,t=[['Masuk',c.masuk],['Mulai muat',c.start],['Selesai muat',c.finish],['Mulai check',c.receive],['Selesai check',c.completed],['Keluar',c.keluar]].filter(function(x){return x[1];});
   return h`<article class=${'car'+(p.hot?' hot':'')}>
     <div class="no">${c.no}</div>
     <div class="bd">
       <div class="l1"><b>${c.nopol}</b><span class=${'chip s-'+c.status}>${STATUS[c.status]||c.status}</span>${p.hot?h`<span class="chip tag">Giliran sekarang</span>`:null}</div>
-      <div class="mut">${[c.sopir,c.tujuan].filter(Boolean).join(' · ')||'—'}</div>
+      <div class="mut">${[c.jenis,c.tujuan,c.sopir,c.spm?'SPM '+c.spm:''].filter(Boolean).join(' · ')||'—'}</div>
       <div class="tm">${t.map(function(x){return h`<span>${x[0]} ${x[1]}</span>`;})}
-        ${c.mnt!=null&&c.status!=='COMPLETED'?h`<span class="el">${c.mnt} mnt</span>`:null}</div>
+        ${c.mnt!=null&&c.status!=='KELUAR'?h`<span class="el">${c.mnt} mnt</span>`:null}</div>
       ${c.exc?h`<div class="wr">Lompat antrean${c.alasan?': '+c.alasan:''}</div>`:null}
     </div>
     ${p.children?h`<div>${p.children}</div>`:null}

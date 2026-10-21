@@ -20,7 +20,8 @@ var CFG = {
     LOADING: 'LOADING',
     SELESAI: 'SELESAI_MUAT',
     RECEIVED: 'RECEIVED',
-    DONE: 'COMPLETED'
+    DONE: 'COMPLETED',
+    KELUAR: 'KELUAR'
   },
 
   ROLE: {
@@ -38,7 +39,8 @@ var CFG = {
       'Jam_Receive', 'Checker', 'Jam_Completed',
       'Status', 'Exception', 'Alasan_Exception', 'Input_Susulan',
       'Waktu_Ke_SPM', 'Waiting', 'Loading', 'Lead_Time', 'Over_Target', 'FIFO_OK',
-      'Urut_Bagi_SPM', 'Urut_Muat', 'Selisih_SPM', 'Selisih_Muat', 'Tanda'
+      'Urut_Bagi_SPM', 'Urut_Muat', 'Selisih_SPM', 'Selisih_Muat', 'Tanda',
+      'Jenis_Kendaraan', 'Urut_Finish', 'Jam_Keluar', 'Security_Keluar'
     ],
     LOG: ['Timestamp', 'ID', 'Status_Lama', 'Status_Baru', 'Pelaku', 'Peran', 'Catatan'],
     USER: ['Nama', 'Peran', 'Aktif'],
@@ -46,7 +48,7 @@ var CFG = {
   },
 
   TEXT_COLS: ['ID', 'Tanggal', 'No_Polisi', 'No_SPM'],
-  TIME_COLS: ['Jam_Masuk', 'Jam_Dibagi', 'Jam_Start', 'Jam_Finish', 'Jam_Receive', 'Jam_Completed'],
+  TIME_COLS: ['Jam_Masuk', 'Jam_Dibagi', 'Jam_Start', 'Jam_Finish', 'Jam_Receive', 'Jam_Completed', 'Jam_Keluar'],
 
   DEFAULT_CONFIG: [
     ['TARGET_WAITING_MENIT', 30, 'Batas waktu tunggu (Start Loading - Jam Masuk) sebelum dihitung Over Target'],
@@ -66,8 +68,10 @@ var CFG = {
 /** Alur status: setiap aksi hanya sah dari status tertentu oleh peran tertentu. */
 CFG.FLOW = {
   start:   { from: 'MASUK',        to: 'LOADING',      role: 'JURU_MUAT', time: 'Jam_Start',     actor: 'Juru_Muat' },
-  receive: { from: 'LOADING',      to: 'RECEIVED',     role: 'CHECKER',   time: 'Jam_Receive',   actor: 'Checker' },
-  done:    { from: 'RECEIVED',     to: 'COMPLETED',    role: 'CHECKER',   time: 'Jam_Completed' }
+  finish:  { from: 'LOADING',      to: 'SELESAI_MUAT', role: 'JURU_MUAT', time: 'Jam_Finish' },
+  receive: { from: 'SELESAI_MUAT', to: 'RECEIVED',     role: 'CHECKER',   time: 'Jam_Receive',   actor: 'Checker' },
+  done:    { from: 'RECEIVED',     to: 'COMPLETED',    role: 'CHECKER',   time: 'Jam_Completed' },
+  out:     { from: 'COMPLETED',    to: 'KELUAR',       role: 'SECURITY',  time: 'Jam_Keluar',    actor: 'Security_Keluar' }
 };
 
 /** Kinerja: lama simpan hasil baca USER/CONFIG (detik) dan jumlah baris TRANSAKSI terakhir yang dibaca. */
@@ -102,9 +106,31 @@ function sheet_(name) {
     memo_.ss = memo_.ss || SpreadsheetApp.getActive();
     var s = memo_.ss.getSheetByName(name);
     if (!s) throw new Error('Tab ' + name + ' belum ada. Jalankan Control Tower > Setup tab otomatis.');
+    ensureCols_(s, name);
     memo_.sheets[name] = s;
   }
   return memo_.sheets[name];
+}
+
+/**
+ * Bila Code.gs diperbarui dan kolom baru belum ada di sheet, tambahkan header kolomnya (tanpa menggeser data).
+ * Hanya bila header lama persis sama dengan awal daftar kolom di Config. Dicek sekali per 6 jam.
+ */
+function ensureCols_(s, name) {
+  var want = null;
+  Object.keys(CFG.SHEET).forEach(function (k) { if (CFG.SHEET[k] === name) want = CFG.COLS[k]; });
+  if (!want) return;
+  var cache = CacheService.getScriptCache(), ck = 'cols:' + name + ':' + want.length;
+  if (cache.get(ck)) return;
+  var have = s.getRange(1, 1, 1, Math.max(s.getLastColumn(), 1)).getValues()[0];
+  while (have.length && have[have.length - 1] === '') have.pop();
+  var prefix = have.length < want.length && have.every(function (c, i) { return c === want[i]; });
+  if (prefix) {
+    if (s.getMaxColumns() < want.length) s.insertColumnsAfter(s.getMaxColumns(), want.length - s.getMaxColumns());
+    var add = want.slice(have.length);
+    s.getRange(1, have.length + 1, 1, add.length).setValues([add]).setFontWeight('bold').setBackground('#e8eef0');
+  }
+  cache.put(ck, '1', 21600);
 }
 
 /**
@@ -438,7 +464,7 @@ function securityView_() {
 
 /**
  * Catat kendaraan masuk.
- * p = { pelaku, nopol, sopir, tujuan, paksa }
+ * p = { pelaku, nopol, sopir, tujuan, jenis, paksa }
  * Mengembalikan { dup: true } bila No. Polisi yang sama masih aktif hari ini,
  * kecuali p.paksa bernilai true.
  */
@@ -454,7 +480,7 @@ function recordEntry_(p) {
     var rows = listByDate_(date);
 
     var active = rows.some(function (r) {
-      return r.No_Polisi === nopol && r.Status !== CFG.STATUS.DONE;
+      return r.No_Polisi === nopol && r.Status !== CFG.STATUS.KELUAR;
     });
     if (active && !p.paksa) return { dup: true };
 
@@ -464,6 +490,7 @@ function recordEntry_(p) {
     var rec = {
       ID: id, Tanggal: date, No_Antrean: no, No_Polisi: nopol,
       Sopir: String(p.sopir || '').trim(), Tujuan: String(p.tujuan || '').trim(),
+      Jenis_Kendaraan: String(p.jenis || '').trim(),
       Jam_Masuk: new Date(), Dicatat_Security: p.pelaku,
       Status: CFG.STATUS.MASUK, Exception: 'Tidak', Input_Susulan: 'Tidak'
     };
@@ -514,8 +541,8 @@ function urut_(m) {
 function calc_(m) {
   var o = {
     Waiting: mins_(m.Jam_Masuk, m.Jam_Start),
-    Loading: mins_(m.Jam_Start, m.Jam_Receive),
-    Lead_Time: mins_(m.Jam_Masuk, m.Jam_Receive)
+    Loading: mins_(m.Jam_Start, m.Jam_Finish),
+    Lead_Time: mins_(m.Jam_Masuk, m.Jam_Keluar instanceof Date ? m.Jam_Keluar : m.Jam_Completed)
   };
   var tw = Number(cfg_('TARGET_WAITING_MENIT', 30));
   var tl = Number(cfg_('TARGET_LOADING_MENIT', 60));
@@ -538,7 +565,7 @@ function nextFifo_(rows) {
 
 /**
  * Satu pintu untuk semua perubahan status.
- * p = { action, id, pelaku, page, alasan? }
+ * p = { action, id, pelaku, page, alasan?, spm? }
  */
 function act_(p) {
   var f = CFG.FLOW[p.action];
@@ -573,6 +600,14 @@ function act_(p) {
       note = (note ? note + '; ' : '') + 'Urut muat ke-' + set.Urut_Muat;
     }
 
+    if ((p.action === 'start' || p.action === 'finish') && String(p.spm || '').trim()) {
+      set.No_SPM = String(p.spm).toUpperCase().replace(/\s+/g, ' ').trim();
+    }
+    if (p.action === 'finish') {
+      set.Urut_Finish = maxNum_(day, 'Urut_Finish') + 1;
+      note = 'Urut selesai muat ke-' + set.Urut_Finish;
+    }
+
     var merged = {};
     Object.keys(r).forEach(function (k) { merged[k] = r[k]; });
     Object.keys(set).forEach(function (k) { merged[k] = set[k]; });
@@ -584,7 +619,8 @@ function act_(p) {
 
     // perbarui salinan di memori agar tampilan tidak perlu membaca sheet lagi
     Object.keys(set).forEach(function (k) { r[k] = set[k]; });
-    return { ok: true, view: view_(p.page, rowsOfDate_(all, today_())) };
+    var today = rowsOfDate_(all, today_());
+    return { ok: true, view: p.page === 'security' ? securityViewFrom_(today_(), today) : view_(p.page, today) };
   } finally {
     lock.releaseLock();
   }
@@ -595,7 +631,7 @@ function act_(p) {
 function card_(r) {
   var S = CFG.STATUS;
   var base = { MASUK: r.Jam_Masuk, SPM_DIBAGI: r.Jam_Dibagi, LOADING: r.Jam_Start,
-               SELESAI_MUAT: r.Jam_Finish, RECEIVED: r.Jam_Receive }[r.Status];
+               SELESAI_MUAT: r.Jam_Finish, RECEIVED: r.Jam_Receive, COMPLETED: r.Jam_Completed }[r.Status];
   var num = function (x) { return typeof x === 'number' ? x : null; };
   return {
     id: r.ID, no: pad_(Number(r.No_Antrean)), nopol: r.No_Polisi, spm: r.No_SPM,
@@ -606,6 +642,7 @@ function card_(r) {
     waiting: num(r.Waiting), loading: num(r.Loading), lead: num(r.Lead_Time),
     mnt: base instanceof Date ? Math.round((new Date() - base) / 60000) : null,
     exc: r.Exception === 'Ya', alasan: r.Alasan_Exception,
+    jenis: r.Jenis_Kendaraan, keluar: hm_(r.Jam_Keluar), secOut: r.Security_Keluar, urutFin: num(r.Urut_Finish),
     urutSpm: num(r.Urut_Bagi_SPM), urutMuat: num(r.Urut_Muat),
     selSpm: num(r.Selisih_SPM), selMuat: num(r.Selisih_Muat), tanda: r.Tanda || ''
   };
@@ -625,7 +662,7 @@ function kpi_(rows) {
     total: rows.length,
     waiting: rows.filter(function (r) { return r.Status === S.MASUK || r.Status === S.SPM; }).length,
     loading: rows.filter(function (r) { return r.Status === S.LOADING; }).length,
-    completed: rows.filter(function (r) { return r.Status === S.DONE; }).length,
+    completed: rows.filter(function (r) { return r.Status === S.DONE || r.Status === S.KELUAR; }).length,
     avgWaiting: avg_(rows, 'Waiting'),
     avgLoading: avg_(rows, 'Loading'),
     fifo: started.length ? Math.round(fifoOk * 100 / started.length) : null,
@@ -646,7 +683,7 @@ function view_(page, rowsIn) {
     v.next = nextFifo_(rows);
   } else if (page === 'checker') {
     v.users = userNames_(R.CHECKER);
-    v.list = rows.filter(function (r) { return r.Status === S.LOADING || r.Status === S.RECEIVED; }).map(card_);
+    v.list = rows.filter(function (r) { return r.Status === S.SELESAI || r.Status === S.RECEIVED; }).map(card_);
   } else if (page === 'dashboard') {
     v.kpi = kpi_(rows);
     v.list = rows.map(card_);
