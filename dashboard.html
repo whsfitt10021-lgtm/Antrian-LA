@@ -1,8 +1,13 @@
 <!DOCTYPE html>
-<html><head><base target="_top"><meta charset="utf-8"><link rel="preconnect" href="https://unpkg.com" crossorigin><title>Urutan Muat</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Urutan Muat</title>
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <style>
+@font-face{font-family:'Barlow Condensed';font-weight:500;font-display:swap;src:url(assets/fonts/barlow-condensed-500.woff2) format('woff2')}
+@font-face{font-family:'Barlow Condensed';font-weight:600;font-display:swap;src:url(assets/fonts/barlow-condensed-600.woff2) format('woff2')}
+@font-face{font-family:'Barlow Condensed';font-weight:700;font-display:swap;src:url(assets/fonts/barlow-condensed-700.woff2) format('woff2')}
+
 /* Papan antrian terang. Semua ukuran dalam rem: 1rem = 0,9% lebar layar, jadi identik di 1080p, 4K, atau 8K. */
 *{box-sizing:border-box}
 :root{--s:max(1px,calc(100vw / 1920));--ink:#1c2733;--mut:#667385;--line:#d8dfe8;--navy:#1d4f91;--bg:#eef2f6}
@@ -86,13 +91,14 @@ body{margin:0;height:100vh;overflow:hidden;display:grid;grid-template-columns:ca
 }
 </style>
 </head><body>
-<?!= navHtml(page) ?>
 <div id="app"></div>
-<script src="https://unpkg.com/preact@10.19.6/dist/preact.min.js"></script>
-<script src="https://unpkg.com/preact@10.19.6/hooks/dist/hooks.umd.js"></script>
-<script src="https://unpkg.com/htm@3.1.1/dist/htm.js"></script>
-<?!= include('Lib') ?>
+<script src="assets/config.js"></script>
+<script src="assets/vendor/preact.min.js"></script>
+<script src="assets/vendor/hooks.umd.js"></script>
+<script src="assets/vendor/htm.js"></script>
+<script src="assets/lib.js"></script>
 <script>
+mountNav('dashboard');
 function hm(){try{return new Date().toLocaleTimeString('id-ID',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit'});}catch(e){return '';}}
 function p2(n){return ('0'+n).slice(-2);}
 
@@ -140,7 +146,7 @@ function App(){
     try{if(document.fullscreenElement)document.exitFullscreen();}catch(x){}
   }
   useEffect(function(){
-    try{google.script.url.getLocation(function(l){if(l&&l.parameter&&l.parameter.tv==='1')tvs[1](true);});}catch(x){}
+    if(/[?&]tv=1/.test(location.search))tvs[1](true);
   },[]);
   useEffect(function(){
     document.documentElement.classList.toggle('tvm',tv);

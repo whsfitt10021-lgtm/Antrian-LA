@@ -1,17 +1,40 @@
-<script>
 var h=htm.bind(preact.h),hk=preactHooks,useState=hk.useState,useEffect=hk.useEffect,useRef=hk.useRef,useCallback=hk.useCallback;
 var STATUS={MASUK:'Menunggu',SPM_DIBAGI:'SPM dibagi',LOADING:'Loading',SELESAI_MUAT:'Selesai muat',RECEIVED:'Diterima',COMPLETED:'Selesai'};
 var REFRESH='M17.65 6.35A7.96 7.96 0 0012 4a8 8 0 108 8h-2a6 6 0 11-1.76-4.24L13 11h7V4l-2.35 2.35z';
 
-function call(fn,arg){
-  return new Promise(function(ok,no){
-    var r=google.script.run.withSuccessHandler(ok).withFailureHandler(function(e){
-      var m=String((e&&e.message)||'').replace(/^(Error|Exception):\s*/,'');
-      no(new Error(m||'Tidak bisa terhubung ke server. Periksa sinyal lalu coba lagi.'));
-    });
-    if(arg===undefined)r[fn]();else r[fn](arg);
-  });
+/* API: Apps Script web app. Alamat bawaan di assets/config.js, bisa diganti dari index.html (disimpan di browser). */
+function apiUrl(){
+  var u='';try{u=localStorage.getItem('antrian_la_url')||'';}catch(e){}
+  return u||((window.ANTRIAN||{}).apiUrl)||'';
 }
+function call(fn,arg,retry){
+  var url=apiUrl();
+  if(!url)return Promise.reject(new Error('Alamat server belum diisi. Buka halaman utama lalu isi "Ubah link".'));
+  var ac=window.AbortController?new AbortController():null,tm=ac?setTimeout(function(){ac.abort();},30000):0;
+  return fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},redirect:'follow',signal:ac?ac.signal:undefined,
+    body:JSON.stringify({fn:fn,arg:arg,key:store('antrian_la_key')})
+  }).then(function(r){clearTimeout(tm);return r.json();}).then(function(j){
+    if(j&&j.ok)return j.data;
+    if(j&&j.code==='AUTH'&&!retry){
+      var k=window.prompt('Masukkan kode akses:');
+      if(k){store('antrian_la_key',k);return call(fn,arg,true);}
+    }
+    throw new Error((j&&j.error)||'Server tidak menjawab dengan benar.');
+  },function(){clearTimeout(tm);throw new Error('Tidak bisa terhubung ke server. Periksa sinyal lalu coba lagi.');});
+}
+
+/* Menu samping (desktop) / menu bawah (HP). */
+var NAVS=[['security','Security','M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'],
+['juru','Juru muat','M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'],
+['checker','Checker','M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'],
+['dashboard','Dashboard','M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z']];
+function mountNav(page){
+  var x='<nav class="nav" aria-label="Menu">'+NAVS.map(function(n){
+    return '<a href="'+n[0]+'.html"'+(n[0]===page?' class="on" aria-current="page"':'')+'><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+n[2]+'"/></svg><span>'+n[1]+'</span></a>';
+  }).join('')+'</nav>';
+  document.body.insertAdjacentHTML('afterbegin',x);
+}
+
 function store(k,v){
   try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v);}catch(e){}
   return '';
@@ -165,4 +188,3 @@ function Car(p){
     ${p.children?h`<div>${p.children}</div>`:null}
   </article>`;
 }
-</script>

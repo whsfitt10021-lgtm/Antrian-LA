@@ -1,22 +1,41 @@
 # Antrian LA
 
+Control Tower antrian muat. **Tampilan 100% di GitHub (Pages), data lewat API Apps Script + Google Sheets.**
+
 **Buka aplikasi:** https://whsfitt10021-lgtm.github.io/Antrian-LA/
 
-Control Tower antrian muat (Google Apps Script + Preact).
+```
+Browser  ──(halaman statis)──▶  GitHub Pages   (index, security, juru, checker, dashboard)
+Browser  ──(fetch JSON)──────▶  Apps Script     (apps-script/Code.gs, jadi API)  ──▶  Google Sheets
+```
 
-## Isi
-- `Code.gs` : server (config, alur status, REKAP, API web app)
-- `Style.html`, `Lib.html` : gaya dan pustaka bersama
-- `Security.html`, `Juru.html`, `Checker.html`, `Dashboard.html` : satu halaman per peran
+## Struktur
+| Path | Isi |
+|---|---|
+| `index.html` | Gerbang menu + ganti alamat API |
+| `security.html` `juru.html` `checker.html` | Halaman per peran |
+| `dashboard.html` | Urutan datang vs urutan muat; `?tv=1` untuk mode layar TV |
+| `assets/config.js` | **Alamat API** (link `/exec` Apps Script) |
+| `assets/lib.js`, `assets/style.css` | Pustaka dan gaya bersama |
+| `assets/vendor/` | Preact + htm (lokal, tanpa CDN) |
+| `assets/fonts/` | Barlow Condensed (lokal, untuk dashboard TV) |
+| `apps-script/Code.gs` | Backend: aturan bisnis + API JSON |
+| `apps-script/appsscript.json` | Pengaturan deploy (akses Anyone) |
 
-## Pasang
-1. Di Apps Script, tempel `Code.gs`, lalu buat 5 file HTML dengan nama persis seperti di atas.
-2. Jalankan menu Control Tower > Setup tab otomatis, lalu Perbarui REKAP.
-3. Deploy sebagai Web app. Halaman: `?page=security|juru|checker|dashboard`.
-4. TV: `?page=dashboard&tv=1`.
+## Pasang backend (Apps Script)
+1. Buat Google Sheet, buka **Extensions > Apps Script**.
+2. Tempel isi `apps-script/Code.gs` ke `Code.gs`. (File HTML lama di Apps Script tidak dipakai lagi, boleh dihapus.)
+3. Opsional: tampilkan `appsscript.json` di Project Settings lalu samakan isinya.
+4. Jalankan menu **Control Tower > Setup tab otomatis**, lalu isi nama petugas di tab `USER`.
+5. **Deploy > New deployment > Web app**: Execute as **Me**, Who has access **Anyone**. Salin link `/exec`.
+6. Tempel link itu ke `assets/config.js` (atau lewat "Ubah link" di `index.html`, berlaku per browser).
 
-## Halaman github.io
-Alamat: https://whsfitt10021-lgtm.github.io/Antrian-LA/
+Setiap mengubah `Code.gs`: **Deploy > Manage deployments > Edit > New version** agar link `/exec` tetap sama.
 
-`index.html` adalah gerbang menuju tiap halaman. Aktifkan di GitHub: Settings > Pages > Deploy from a branch > `main` / root.
-Link web app Apps Script sudah terpasang sebagai bawaan. Kalau Anda membuat deploy baru, ganti lewat "Ubah link" di halaman itu (diingat di browser). Web app harus di-deploy dengan akses **Anyone** agar petugas tanpa login Google bisa membukanya.
+## Pasang tampilan (GitHub Pages)
+Settings > Pages > Deploy from a branch > `main` / root > Save.
+
+## Keamanan
+- Akses **Anyone** berarti siapa pun yang tahu link `/exec` bisa memanggil API. Untuk membatasi, isi baris `API_KEY` di tab `CONFIG` (tambahkan barisnya bila belum ada). Halaman akan meminta kode akses satu kali per browser.
+- API hanya menerima fungsi yang didaftarkan (`apiSecurityInit`, `apiSecurityList`, `apiSecurityEntry`, `apiView`, `apiAct`); fungsi lain ditolak.
+- Repo publik: jangan simpan kode akses di dalam repo.

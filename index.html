@@ -2,7 +2,7 @@
 <html lang="id"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Antrian LA</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%231d4f91'/%3E%3Cpath fill='%23fff' d='M12 4 5.5 6.8v4.4c0 3.9 2.8 7.4 6.5 8.3 3.7-.9 6.5-4.4 6.5-8.3V6.8z'/%3E%3C/svg%3E">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <style>
 :root{--navy:#1d4f91;--ink:#1c2733;--mut:#667385;--ln:#d8dfe8;--bg:#eef2f6}
 *{box-sizing:border-box}
@@ -29,8 +29,8 @@ button{font:inherit;font-weight:600;min-height:48px;padding:0 22px;border:0;bord
 <h1>Antrian LA</h1><p class="s">Control Tower antrian muat. Pilih peran Anda.</p>
 
 <section id="setup" class="box" hidden>
-  <b>Ganti link web app</b>
-  <p class="s" style="margin:4px 0 0">Tempel link web app Apps Script (berakhiran <code>/exec</code>) bila Anda membuat deploy baru. Link disimpan di browser ini.</p>
+  <b>Alamat server (API)</b>
+  <p class="s" style="margin:4px 0 0">Link web app Apps Script berakhiran <code>/exec</code>. Bawaannya ada di <code>assets/config.js</code>; perubahan di sini hanya berlaku di browser ini.</p>
   <input id="u" type="url" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/.../exec">
   <div class="err" id="e"></div>
   <button id="save">Simpan</button>
@@ -38,30 +38,29 @@ button{font:inherit;font-weight:600;min-height:48px;padding:0 22px;border:0;bord
 
 <section id="menu" hidden>
   <div class="g" id="g"></div>
-  <p class="ft"><a id="ch" role="button" tabindex="0">Ubah link</a></p>
+  <p class="ft">Data diambil dari Google Sheets lewat Apps Script. <a id="ch" role="button" tabindex="0">Ubah link</a></p>
 </section>
 </main>
+<script src="assets/config.js"></script>
 <script>
 var P={security:['Security','Catat kendaraan masuk','M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'],
 juru:['Juru muat','Mulai muat sesuai giliran','M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'],
 checker:['Checker','Terima dan selesaikan muatan','M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'],
 dashboard:['Dashboard','Urutan datang vs urutan muat','M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z']};
 var K='antrian_la_url';
-var DEF='https://script.google.com/macros/s/AKfycbxGzIARGAK7lKye6LNGgqKzVgSHUniZWhblGvF3IzsVkzDX6YmPfVvcn5ZhZNXHynBF/exec'; /* link bawaan; bisa diganti lewat "Ubah link" */
-function get(){try{return localStorage.getItem(K)||DEF;}catch(e){return DEF;}}
+function get(){var u='';try{u=localStorage.getItem(K)||'';}catch(e){}return u||((window.ANTRIAN||{}).apiUrl)||'';}
 function put(v){try{localStorage.setItem(K,v);}catch(e){}}
-function link(u,p,x){return u+(u.indexOf('?')<0?'?':'&')+'page='+p+(x||'');}
 function show(edit){
-  var u=get(),ok=/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(u)&&edit!==true;
-  document.getElementById('setup').hidden=ok;document.getElementById('menu').hidden=!ok;
-  if(!ok)return;
+  var u=get();
+  document.getElementById('setup').hidden=!edit;document.getElementById('menu').hidden=false;
+  if(edit===true)return;
   var g=document.getElementById('g');g.textContent='';
   Object.keys(P).forEach(function(k){
-    var a=document.createElement('a');a.className='c';a.href=link(u,k);
+    var a=document.createElement('a');a.className='c';a.href=k+'.html';
     a.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+P[k][2]+'"/></svg><div><b>'+P[k][0]+'</b><span>'+P[k][1]+'</span></div>';
     g.appendChild(a);
   });
-  var t=document.createElement('a');t.className='c tv';t.href=link(u,'dashboard','&tv=1');t.textContent='Buka Dashboard mode layar TV';g.appendChild(t);
+  var t=document.createElement('a');t.className='c tv';t.href='dashboard.html?tv=1';t.textContent='Buka Dashboard mode layar TV';g.appendChild(t);
 }
 document.getElementById('save').onclick=function(){
   var v=document.getElementById('u').value.trim(),e=document.getElementById('e');

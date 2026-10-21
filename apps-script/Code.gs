@@ -1,5 +1,5 @@
 /**
- * Code.gs — gabungan semua file .gs (Config, Util, Setup, Transaksi, Alur, Web).
+ * Code.gs — gabungan semua file .gs (Config, Util, Setup, Transaksi, Alur, Web/API).
  * Tempel utuh ke satu file Code.gs di Apps Script. Urutan bagian jangan diubah.
  */
 
@@ -52,7 +52,8 @@ var CFG = {
     ['TARGET_WAITING_MENIT', 30, 'Batas waktu tunggu (Start Loading - Jam Masuk) sebelum dihitung Over Target'],
     ['TARGET_LOADING_MENIT', 60, 'Batas durasi loading (Receive - Start)'],
     ['TARGET_LEAD_MENIT', 120, 'Batas lead time total (Receive - Masuk)'],
-    ['ADMIN_EMAILS', '', 'Email admin, pisahkan dengan koma']
+    ['ADMIN_EMAILS', '', 'Email admin, pisahkan dengan koma'],
+    ['API_KEY', '', 'Kode akses opsional untuk API; kosongkan bila tidak dipakai']
   ],
 
   SEED_USER: [
@@ -267,7 +268,7 @@ function setup() {
     '1. Ganti nama contoh di tab USER dengan nama asli.\n' +
     '2. Isi ADMIN_EMAILS di tab CONFIG.\n' +
     '3. Buka tab REKAP, pilih tanggal di sel B3.\n' +
-    '4. Deploy sebagai Web app.'
+    '4. Deploy sebagai Web app (akses: Anyone), salin link /exec ke assets/config.js di GitHub.'
   );
 }
 
@@ -658,47 +659,52 @@ function view_(page, rowsIn) {
 /* ======================= Web ======================= */
 
 /**
- * Web.gs — pintu masuk web app dan API untuk halaman.
- * Satu link, satu halaman per peran: ...?page=security | pic | juru | checker | dashboard
+ * Web.gs — Apps Script hanya berfungsi sebagai API JSON. Tampilan ada di GitHub Pages.
+ * POST (teks biasa, agar tanpa preflight CORS): { fn, arg, key } -> { ok, data } atau { ok:false, error, code? }
+ * GET  ?fn=apiView&arg="juru" (hanya fungsi baca) atau tanpa parameter untuk cek hidup.
+ * Kode akses opsional: isi baris API_KEY di tab CONFIG; kosong = terbuka.
  */
 
-var PAGES = {
-  security: 'Security',
-  juru: 'Juru',
-  checker: 'Checker',
-  dashboard: 'Dashboard'
-};
+var API_READ = ['apiSecurityInit', 'apiSecurityList', 'apiView'];
+
+function apiTable_() {
+  return {
+    apiSecurityInit: apiSecurityInit, apiSecurityList: apiSecurityList, apiSecurityEntry: apiSecurityEntry,
+    apiView: apiView, apiAct: apiAct
+  };
+}
+
+function json_(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function handle_(req, readOnly) {
+  try {
+    var fn = String(req.fn || '');
+    var f = apiTable_()[fn];
+    if (!f) return json_({ ok: false, error: 'Fungsi tidak dikenal.' });
+    if (readOnly && API_READ.indexOf(fn) === -1) return json_({ ok: false, error: 'Gunakan POST untuk aksi ini.' });
+    var key = String(cfg_('API_KEY', '') || '');
+    if (key && String(req.key || '') !== key) return json_({ ok: false, code: 'AUTH', error: 'Kode akses salah.' });
+    return json_({ ok: true, data: f(req.arg) });
+  } catch (err) {
+    return json_({ ok: false, error: String((err && err.message) || err).replace(/^(Error|Exception):\s*/, '') });
+  }
+}
+
+function doPost(e) {
+  var req;
+  try { req = JSON.parse(e.postData.contents); }
+  catch (x) { return json_({ ok: false, error: 'Permintaan tidak valid.' }); }
+  return handle_(req || {}, false);
+}
 
 function doGet(e) {
-  var key = String((e && e.parameter && e.parameter.page) || 'security').toLowerCase();
-  if (!PAGES[key]) return HtmlService.createHtmlOutput('Halaman tidak ditemukan.');
-  var t = HtmlService.createTemplateFromFile(PAGES[key]);
-  t.page = key;
-  return t.evaluate()
-    .setTitle('Loading Control Tower')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-}
-
-var NAV = [
-  ['security', 'Security',  'M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'],
-  ['juru',     'Juru muat', 'M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'],
-  ['checker',  'Checker',   'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'],
-  ['dashboard','Dashboard', 'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z']
-];
-
-/** Menu bawah (HP) atau sidebar (desktop), dibuat di server agar link memakai URL web app. */
-function navHtml(page) {
-  var base = ScriptApp.getService().getUrl();
-  var items = NAV.map(function (n) {
-    return '<a href="' + base + '?page=' + n[0] + '" target="_top"' + (n[0] === page ? ' class="on" aria-current="page"' : '') + '>' +
-           '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + n[2] + '"/></svg><span>' + n[1] + '</span></a>';
-  }).join('');
-  return '<nav class="nav" aria-label="Menu">' + items + '</nav>';
-}
-
-function include(file) {
-  return HtmlService.createHtmlOutputFromFile(file).getContent();
+  var p = (e && e.parameter) || {};
+  if (!p.fn) return json_({ ok: true, app: 'Antrian LA API' });
+  var arg;
+  try { arg = p.arg ? JSON.parse(p.arg) : undefined; } catch (x) { arg = p.arg; }
+  return handle_({ fn: p.fn, arg: arg, key: p.key }, true);
 }
 
 /* ---- Security ---- */

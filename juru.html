@@ -1,14 +1,18 @@
 <!DOCTYPE html>
-<html><head><base target="_top"><meta charset="utf-8"><link rel="preconnect" href="https://unpkg.com" crossorigin><title>Juru muat</title>
-<?!= include('Style') ?>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Juru muat</title>
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
 </head><body>
-<?!= navHtml(page) ?>
 <div id="app"></div>
-<script src="https://unpkg.com/preact@10.19.6/dist/preact.min.js"></script>
-<script src="https://unpkg.com/preact@10.19.6/hooks/dist/hooks.umd.js"></script>
-<script src="https://unpkg.com/htm@3.1.1/dist/htm.js"></script>
-<?!= include('Lib') ?>
+<script src="assets/config.js"></script>
+<script src="assets/vendor/preact.min.js"></script>
+<script src="assets/vendor/hooks.umd.js"></script>
+<script src="assets/vendor/htm.js"></script>
+<script src="assets/lib.js"></script>
 <script>
+mountNav('juru');
 function App(){
   var L=useLive(function(){return call('apiView','juru');},15000,'juru');
   var tt=useToast(),toast=tt[1],D=useDo(L,toast);
