@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Urutan Muat</title>
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<style>
+@font-face{font-family:'Barlow Condensed';font-weight:500;font-display:swap;src:url(assets/fonts/barlow-condensed-500.woff2) format('woff2')}
+@font-face{font-family:'Barlow Condensed';font-weight:600;font-display:swap;src:url(assets/fonts/barlow-condensed-600.woff2) format('woff2')}
+@font-face{font-family:'Barlow Condensed';font-weight:700;font-display:swap;src:url(assets/fonts/barlow-condensed-700.woff2) format('woff2')}
+
+/* Papan antrian terang. Semua ukuran dalam rem: 1rem = 0,9% lebar layar, jadi identik di 1080p, 4K, atau 8K. */
+*{box-sizing:border-box}
+:root{--s:max(1px,calc(100vw / 1920));--ink:#1c2733;--mut:#667385;--line:#d8dfe8;--navy:#1d4f91;--bg:#eef2f6;--sh:0 .1rem .3rem #1d4f9114,0 .6rem 1.8rem #1d4f9112}
+html{font-size:min(calc((100vw - 220 * var(--s)) * .009),1.6vh);-webkit-text-size-adjust:100%}
+html.tvm{font-size:min(.9vw,1.6vh)}
+body{margin:0;height:100vh;overflow:hidden;display:grid;grid-template-columns:calc(220 * var(--s)) minmax(0,1fr);background:radial-gradient(120% 90% at 0% 0%,#f8fbff 0,#eef2f6 55%,#e6ecf3 100%);color:var(--ink);
+ font:500 2.1rem/1.1 "Barlow Condensed","Arial Narrow",Arial,sans-serif;
+ -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
+.pg{height:100vh;min-width:0;display:flex;flex-direction:column;padding:1.8rem 2.4rem 1.4rem;gap:1.2rem}
+.hd{display:flex;align-items:center;gap:2.4rem;flex:none}
+.hd h1{margin:0;padding-left:1.4rem;border-left:.5rem solid var(--navy);font-size:4.2rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1;color:var(--navy)}
+.hd h1 small{display:block;font-size:1.5rem;font-weight:500;letter-spacing:.3em;color:var(--mut);margin-top:.4rem}
+.nx{margin-left:auto;display:flex;align-items:center;gap:1.2rem;background:linear-gradient(135deg,#1d4f91,#2a6cc0);border:0;padding:.6rem 1.8rem;border-radius:1rem;box-shadow:var(--sh)}
+.nx span{font-size:1.5rem;letter-spacing:.2em;color:#cfe0f7;text-transform:uppercase;text-align:right;line-height:1.1}
+.nx b{font-size:5rem;font-weight:700;color:#fff;line-height:1}
+.ck{text-align:right;line-height:1}
+.ck b{display:block;font-size:6rem;font-weight:700;color:var(--ink);letter-spacing:.02em}
+.ck span{font-size:1.6rem;color:var(--mut);letter-spacing:.12em}
+.off{background:#fbe9e7;color:#b3261e;padding:.5rem 1.4rem;font-size:1.6rem;flex:none;letter-spacing:.06em;border-radius:.6rem}
+.bd{flex:1;min-height:0;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:1.2rem;overflow:hidden;box-shadow:var(--sh)}
+.cols,.rw{display:grid;grid-template-columns:6.3rem 6.2rem 13rem 6.3rem 6.2rem 6.3rem 6.2rem 8.5rem minmax(7rem,1fr) 9rem 6.2rem 6.2rem 6.6rem;align-items:center;column-gap:.8rem;padding:0 1rem}
+.cols{flex:none;background:linear-gradient(#f2f6fb,#e3eaf3);color:var(--navy);font-size:1.15rem;letter-spacing:.02em;line-height:1.1;font-weight:700;height:5.4rem;align-items:end;padding-bottom:.7rem;border-bottom:.15rem solid #c9d6e6}
+.cols>div{white-space:normal}
+.cols>.u,.rw>.u{text-align:center}
+.sc{flex:1;min-height:0;overflow-y:auto;scroll-behavior:smooth}
+.tvm body{grid-template-columns:1fr}
+.tvm .nav,.tvm .fs{display:none}
+.tvm .sc{overflow:hidden}
+.hide-cur,.hide-cur *{cursor:none}
+.nav{background:#fff;border-right:1px solid #e0e3e7;padding:calc(10 * var(--s));display:flex;flex-direction:column;gap:calc(4 * var(--s));position:sticky;top:0;height:100vh;font:500 calc(14 * var(--s))/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.nav a{display:flex;align-items:center;gap:calc(14 * var(--s));padding:calc(12 * var(--s)) calc(16 * var(--s));border-radius:calc(12 * var(--s));color:#3c4043;text-decoration:none}
+.nav a.on{background:#e8f0fe;color:#1a73e8;font-weight:600}
+.nav svg{width:calc(22 * var(--s));height:calc(22 * var(--s));fill:currentColor;flex:none}
+.fs,.exit{font:600 1.5rem "Barlow Condensed","Arial Narrow",Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--navy);background:#fff;border:.15rem solid var(--navy);border-radius:999px;padding:.8rem 1.8rem;cursor:pointer;box-shadow:var(--sh);transition:background-color .15s}
+.fs:hover,.exit:hover{background:#e6ecf4}
+.exit{position:fixed;bottom:1.6rem;right:2.4rem;z-index:5;box-shadow:0 .2rem .8rem #0003}
+
+.rw{height:var(--rh,4.2rem);border-bottom:1px solid #e6ebf1;font-size:2rem}
+.rw:nth-child(even){background:#f7f9fc}
+.rw>div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rw .u{font-size:2.3rem;font-weight:700;color:var(--navy)}
+.rw .u i{font-style:normal;display:inline-block;min-width:4.2rem;padding:.15rem .6rem;border-radius:999px}
+.rw .u i.ok{background:#ddf1e5;color:#1b6e45}
+.rw .u i.bad{background:#fbe4df;color:#a3321f}
+.rw .pl{font-size:2.35rem;font-weight:700;letter-spacing:.02em}
+.rw .mt{color:#9aa3af}
+.rw.nxt{background:#fff6d6;box-shadow:inset .45rem 0 0 #f2b01e}
+.rw.dn{opacity:.55}
+.ft{flex:none;display:grid;grid-template-columns:repeat(5,1fr) auto;gap:1.2rem;align-items:end;background:#fff;border:1px solid var(--line);border-radius:1.2rem;padding:1.1rem 1.8rem;box-shadow:var(--sh)}
+.ft div{line-height:1}
+.ft b{display:block;font-size:3.8rem;font-weight:700;color:var(--ink)}
+.ft .ok b{color:#1b6e45}
+.ft b small{font-size:1.6rem;font-weight:500;color:var(--mut);margin-left:.3rem}
+.ft span{font-size:1.25rem;letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
+.ft .bad b{color:#a3321f}
+.ft>div:not(.up){padding-left:1.2rem;border-left:.4rem solid #c9d6e6;border-radius:.2rem}
+.ft>.ok{border-left-color:#2e9b66}
+.ft>.bad{border-left-color:#d4513a}
+.ft .up{font-size:1.25rem;color:var(--mut);letter-spacing:.1em;text-align:right}
+.emp{padding:4rem;text-align:center;color:var(--mut);font-size:2.6rem}
+@media(max-width:720px){
+ html,html.tvm{font-size:2.6vw}
+ body{display:block;height:auto;overflow:auto;padding-bottom:64px}
+ .pg{height:auto;min-height:100vh;padding:2rem 1.6rem}
+ .nav{position:fixed;left:0;right:0;bottom:0;top:auto;height:60px;flex-direction:row;justify-content:space-around;padding:4px;z-index:10;border-right:0;border-top:1px solid #e0e3e7}
+ .nav a{flex-direction:column;gap:2px;padding:4px 10px;font-size:11px;border-radius:10px}
+ .hd{flex-wrap:wrap;gap:1.4rem}.hd h1{font-size:4.4rem}.hd h1 small{display:none}
+ .nx{margin-left:0;padding:.4rem 1.4rem}.nx b{font-size:4.2rem}.nx span{font-size:1.4rem}
+ .ck b{font-size:4.4rem}.ck span{font-size:1.5rem}.fs{display:none}
+ .bd{flex:none;overflow-x:auto;-webkit-overflow-scrolling:touch}
+ .cols,.rw{min-width:104rem}
+ .sc{overflow:visible;flex:none}
+ .ft{grid-template-columns:repeat(3,1fr);row-gap:1.4rem}.ft b{font-size:4rem}.ft span{font-size:1.4rem;letter-spacing:.06em}.ft .up{grid-column:1/-1;text-align:left;font-size:1.4rem}
+}
+</style>
+</head><body>
+<div id="app"></div>
+<script src="assets/config.js"></script>
+<script src="assets/vendor/preact.min.js"></script>
+<script src="assets/vendor/hooks.umd.js"></script>
+<script src="assets/vendor/htm.js"></script>
+<script src="assets/lib.js"></script>
+<script>
+mountNav('dashboard');
+function hm(){try{return new Date().toLocaleTimeString('id-ID',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit'});}catch(e){return '';}}
+function p2(n){return ('0'+n).slice(-2);}
+
+/* Pindah halaman per kelipatan baris utuh bila daftar lebih panjang dari layar. */
+function usePaging(ref,dep,on){
+  useEffect(function(){
+    if(!on)return;
+    var i=setInterval(function(){
+      var e=ref.current;if(!e||e.scrollHeight<=e.clientHeight+4)return;
+      var r=e.firstChild?e.firstChild.offsetHeight:0;if(!r)return;
+      var step=Math.max(1,Math.floor(e.clientHeight/r))*r;
+      e.scrollTop=(e.scrollTop+e.clientHeight>=e.scrollHeight-4)?0:e.scrollTop+step;
+    },10000);
+    return function(){clearInterval(i);};
+  },[dep,on]);
+}
+
+/* Sesuai bila urutan mulai muat sama dengan urutan kedatangan. */
+function hasil(c){
+  if(c.tanda==='SESUAI')return 'ok';
+  if(c.tanda==='LOMPAT'||c.tanda==='TERTUNDA'||c.tanda==='BEDA_URUT')return 'bad';
+  return '';
+}
+function cell(v){return v?v:h`<span class="mt">–</span>`;}
+function num(v){return v!=null?p2(v):h`<span class="mt">–</span>`;}
+
+function App(){
+  var up=useState('');
+  var L=useLive(function(){return call('apiView','dashboard').then(function(d){up[1](hm());return d;});},20000,'dash');
+  var cl=useState(hm());
+  useEffect(function(){
+    var i=setInterval(function(){cl[1](hm());},10000);
+    return function(){clearInterval(i);};
+  },[]);
+
+  /* Mode layar TV: hanya aktif bila diminta (tombol, atau link dengan &tv=1). */
+  var tvs=useState(false),tv=tvs[0],mvs=useState(true),mv=mvs[0],fs=useRef(false),mt=useRef(0);
+  function enter(){
+    tvs[1](true);
+    try{var e=document.documentElement;if(e.requestFullscreen)e.requestFullscreen().then(function(){fs.current=true;},function(){});}catch(x){}
+  }
+  function leave(){
+    tvs[1](false);fs.current=false;
+    try{if(document.fullscreenElement)document.exitFullscreen();}catch(x){}
+  }
+  useEffect(function(){
+    if(/[?&]tv=1/.test(location.search))tvs[1](true);
+  },[]);
+  useEffect(function(){
+    document.documentElement.classList.toggle('tvm',tv);
+    if(!tv)return;
+    mvs[1](true);mt.current=setTimeout(function(){mvs[1](false);},3000);
+    try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(function(){});}catch(x){}
+    var mm=function(){mvs[1](true);clearTimeout(mt.current);mt.current=setTimeout(function(){mvs[1](false);},3000);};
+    var kd=function(e){if(e.key==='Escape')leave();};
+    var fc=function(){if(!document.fullscreenElement&&fs.current){fs.current=false;tvs[1](false);}};
+    document.addEventListener('mousemove',mm);document.addEventListener('keydown',kd);document.addEventListener('fullscreenchange',fc);
+    return function(){clearTimeout(mt.current);document.removeEventListener('mousemove',mm);document.removeEventListener('keydown',kd);document.removeEventListener('fullscreenchange',fc);};
+  },[tv]);
+  var d=L.st.d||{},all=d.list||[];
+  var ref=useRef(null);usePaging(ref,all.length,tv);
+  /* Pas-kan tinggi baris supaya baris di layar selalu utuh, tanpa potongan di tepi bawah. */
+  useEffect(function(){
+    var e=ref.current;if(!e)return;
+    function fit(){
+      if(window.matchMedia&&matchMedia('(max-width:720px)').matches){e.style.removeProperty('--rh');return;}
+      var rem=parseFloat(getComputedStyle(document.documentElement).fontSize)||16;
+      var n=Math.max(1,Math.round(e.clientHeight/(4.2*rem)));
+      e.style.setProperty('--rh',(e.clientHeight/n)+'px');
+    }
+    fit();
+    var ro=window.ResizeObserver?new ResizeObserver(fit):null;if(ro)ro.observe(e);
+    window.addEventListener('resize',fit);
+    return function(){if(ro)ro.disconnect();window.removeEventListener('resize',fit);};
+  },[tv]);
+  var list=all.slice().sort(function(a,b){return Number(a.no)-Number(b.no);});
+  var wait=all.filter(function(c){return c.status==='MASUK';}).map(function(c){return Number(c.no);});
+  var nextN=wait.length?Math.min.apply(null,wait):null;
+  var ok=0,bad=0,blm=0;
+  all.forEach(function(c){var k=hasil(c);if(k==='ok')ok++;else if(k==='bad')bad++;else blm++;});
+  var pct=(ok+bad)?Math.round(ok*100/(ok+bad)):null;
+  var tiles=[['Total mobil',all.length,'',''],['Sesuai urutan',ok,'','ok'],['Tidak sesuai',bad,'',bad>0?'bad':''],['Belum muat',blm,'',''],['Tingkat kesesuaian',pct==null?'–':pct,pct==null?'':'%',pct!=null&&pct<80?'bad':'ok']];
+  return h`<div class=${'pg'+(tv&&!mv?' hide-cur':'')}>
+    <div class="hd"><h1>Urutan Muat<small>HIJAU = URUTAN MULAI MUAT SESUAI KEDATANGAN · MERAH = TIDAK SESUAI</small></h1>
+      <div class="nx"><span>Giliran<br/>berikutnya</span><b>${nextN==null?'–':p2(nextN)}</b></div>
+      <div class="ck"><b>${cl[0]}</b><span>${d.tanggal||''}</span></div>
+      <button class="fs" onClick=${enter}>Layar penuh (TV)</button></div>
+    ${tv&&mv?h`<button class="exit" onClick=${leave}>Keluar layar penuh · Esc</button>`:null}
+    ${L.st.err?h`<div class="off">KONEKSI TERPUTUS · MENAMPILKAN DATA TERAKHIR</div>`:null}
+    <div class="bd">
+      <div class="cols"><div class="u">Urutan kedatangan</div><div>Jam kedatangan</div><div>No mobil</div><div class="u">Urutan mulai muat</div><div>Jam mulai muat</div><div class="u">Urutan selesai muat</div><div>Jam selesai muat</div><div>No SPM</div><div>Tujuan</div><div>Jenis kendaraan</div><div>Mulai check</div><div>Selesai check</div><div>Security check out</div></div>
+      <div class="sc" ref=${ref}>
+        ${list.length?list.map(function(c){
+          var nx=nextN!=null&&Number(c.no)===nextN;
+          return h`<div key=${c.id} class=${'rw'+(nx?' nxt':'')+(c.status==='KELUAR'?' dn':'')}>
+            <div class="u"><i>${c.no}</i></div><div>${cell(c.masuk)}</div><div class="pl">${c.nopol}</div>
+            <div class="u"><i class=${hasil(c)}>${num(c.urutMuat)}</i></div><div>${cell(c.start)}</div>
+            <div class="u"><i>${num(c.urutFin)}</i></div><div>${cell(c.finish)}</div>
+            <div>${cell(c.spm)}</div><div>${cell(c.tujuan)}</div><div>${cell(c.jenis)}</div>
+            <div>${cell(c.receive)}</div><div>${cell(c.completed)}</div><div>${cell(c.keluar)}</div></div>`;
+        }):h`<div class="emp">${d.tanggal?'BELUM ADA KENDARAAN HARI INI':'MEMUAT…'}</div>`}
+      </div>
+    </div>
+    <div class="ft">${tiles.map(function(t){return h`<div class=${t[3]}><b>${t[1]}${t[2]?h`<small>${t[2]}</small>`:null}</b><span>${t[0]}</span></div>`;})}
+      <div class="up">DIPERBARUI ${up[0]||'–'}</div></div>
+  </div>`;
+}
+preact.render(h`<${App}/>`,document.getElementById('app'));
+</script>
+</body></html>
