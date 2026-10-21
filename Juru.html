@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html><head><base target="_top"><meta charset="utf-8"><title>Juru muat</title>
+<?!= include('Style') ?>
+</head><body>
+<?!= navHtml(page) ?>
+<div id="app"></div>
+<script src="https://unpkg.com/preact@10.19.6/dist/preact.min.js"></script>
+<script src="https://unpkg.com/preact@10.19.6/hooks/dist/hooks.umd.js"></script>
+<script src="https://unpkg.com/htm@3.1.1/dist/htm.js"></script>
+<?!= include('Lib') ?>
+<script>
+function App(){
+  var L=useLive(function(){return call('apiView','juru');},15000);
+  var tt=useToast(),toast=tt[1],D=useDo(L,toast);
+  var d=L.st.d||{},pl=usePelaku(d.users,'pelaku_juru');
+  var cf=useState(null),why=useState('');
+  function start(c,alasan){
+    D.go(c.id,'apiAct',{action:'start',id:c.id,pelaku:pl[0],page:'juru',alasan:alasan||''},'Berhasil. '+c.nopol+' mulai dimuat.').then(function(r){
+      if(r){cf[1](null);why[1]('');}
+    });
+  }
+  var c=cf[0],skip=c&&d.next&&c.no!==d.next;
+  function close(){cf[1](null);why[1]('');}
+  return h`<${Shell} title="Juru muat" live=${L} toast=${tt[0]}>
+    <section class="box"><${Who} users=${d.users} value=${pl[0]} set=${pl[1]}/>
+      <div class="nx"><span>Giliran muat berikutnya</span><b>${d.next||'–'}</b></div></section>
+    <section class="box">
+      ${(d.list||[]).length?(d.list||[]).map(function(x){
+        return h`<${Car} key=${x.id} c=${x} hot=${x.status==='MASUK'&&x.no===d.next}>
+          ${x.status==='MASUK'?h`<button class="btn s" disabled=${!pl[0]||D.busy===x.id} onClick=${function(){cf[1](x);}}>Mulai muat</button>`
+            :h`<span class="mut">Sedang dimuat</span>`}
+        </${Car}>`;
+      }):h`<p class="mut" style="margin:0">Tidak ada mobil yang menunggu atau sedang dimuat.</p>`}
+    </section>
+    ${c?h`<${Confirm} title=${'Mulai muat '+c.nopol+'?'} okLabel="Ya, mulai muat" busy=${D.busy===c.id}
+        disabled=${skip&&!why[0].trim()} onClose=${close} onOk=${function(){start(c,why[0]);}}
+        text=${skip?'Mobil ini antrean '+c.no+', padahal giliran sekarang antrean '+d.next+'. Tulis alasannya agar tercatat.':'Waktu mulai muat akan dicatat sekarang.'}>
+      ${skip?h`<label>Alasan mendahului (wajib)<textarea value=${why[0]} onInput=${function(e){why[1](e.target.value);}} autoFocus></textarea></label>`:null}
+    </${Confirm}>`:null}
+  </${Shell}>`;
+}
+preact.render(h`<${App}/>`,document.getElementById('app'));
+</script>
+</body></html>

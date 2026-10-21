@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html><head><base target="_top"><meta charset="utf-8"><title>Security</title>
+<?!= include('Style') ?>
+</head><body>
+<?!= navHtml(page) ?>
+<div id="app"></div>
+<script src="https://unpkg.com/preact@10.19.6/dist/preact.min.js"></script>
+<script src="https://unpkg.com/preact@10.19.6/hooks/dist/hooks.umd.js"></script>
+<script src="https://unpkg.com/htm@3.1.1/dist/htm.js"></script>
+<?!= include('Lib') ?>
+<script>
+var EMPTY={nopol:'',sopir:'',tujuan:''};
+function norm(x){return String(x||'').toUpperCase().replace(/\s+/g,'');}
+function App(){
+  var first=useRef(true);
+  var L=useLive(function(){
+    var f=first.current?'apiSecurityInit':'apiSecurityList';
+    return call(f).then(function(d){first.current=false;return d;});
+  },20000);
+  var tt=useToast(),toast=tt[1];
+  var d=L.st.d||{},pl=usePelaku(d.users,'pelaku_sec');
+  var q=useState(''),open=useState(false),fm=useState(EMPTY),dup=useState(false),bz=useState(false);
+  var f=fm[0];
+  function field(k){return function(e){var o=Object.assign({},f);o[k]=e.target.value;fm[1](o);dup[1](false);};}
+  function close(){open[1](false);dup[1](false);}
+  function submit(paksa){
+    if(!pl[0])return toast('Pilih nama petugas dulu.',true);
+    if(!f.nopol.trim())return toast('No. polisi wajib diisi.',true);
+    bz[1](true);
+    call('apiSecurityEntry',{pelaku:pl[0],nopol:f.nopol,sopir:f.sopir,tujuan:f.tujuan,paksa:!!paksa}).then(function(r){
+      bz[1](false);
+      if(r.dup){dup[1](true);return;}
+      L.put(r.view);close();fm[1](EMPTY);q[1]('');
+      toast('Berhasil. '+r.nopol+' mendapat antrean '+r.no+'.');
+    },function(e){bz[1](false);toast(e.message,true);});
+  }
+  var Q=norm(q[0]);
+  var all=d.list||[];
+  var list=all.filter(function(c){return !Q||norm(c.nopol).indexOf(Q)>=0;});
+  return h`<${Shell} title="Security" live=${L} toast=${tt[0]}>
+    <div class="nx"><span>Nomor antrean berikutnya</span><b>${d.next}</b></div>
+    <section class="box"><h2>Masuk hari ini${all.length?' ('+all.length+')':''}</h2>
+      <input class="up" type="search" autocomplete="off" placeholder="Cari no. polisi" value=${q[0]} onInput=${function(e){q[1](e.target.value);}}/>
+      ${list.length?h`<div style="margin-top:8px">${list.map(function(c){return h`<${Car} key=${c.id} c=${c}/>`;})}</div>`
+        :h`<p class="mut" style="margin:8px 0 0">${all.length?'Tidak ditemukan. Cek lagi penulisan no. polisi.':'Belum ada kendaraan masuk hari ini. Tekan tombol biru "Catat masuk" di kanan bawah.'}</p>`}
+    </section>
+    <button class="btn fab" onClick=${function(){open[1](true);}}>+ Catat masuk</button>
+    ${open[0]?h`<${Sheet} title="Catat kendaraan masuk" onClose=${close}>
+      <form onSubmit=${function(e){e.preventDefault();submit(false);}}>
+        <div class="nx" style="margin-bottom:12px"><span>Nomor antrean mobil ini</span><b>${d.next}</b></div>
+        <${Who} users=${d.users} value=${pl[0]} set=${pl[1]}/>
+        <label>No. polisi (wajib)<input class="up" value=${f.nopol} onInput=${field('nopol')} autoComplete="off" autoCapitalize="characters" autoFocus placeholder="contoh: B 1234 XYZ"/></label>
+        <label>Nama sopir (boleh kosong)<input value=${f.sopir} onInput=${field('sopir')} autoComplete="off"/></label>
+        <label>Tujuan (boleh kosong)<input value=${f.tujuan} onInput=${field('tujuan')} autoComplete="off"/></label>
+        ${dup[0]?h`<div class="warn"><b>No. polisi ini masih aktif hari ini.</b> Kalau ini mobil yang sama, jangan dicatat lagi. Kalau memang datang lagi, pilih "Tetap catat".</div>`:null}
+        <div class="row">
+          <button type="button" class="btn g" onClick=${close}>Batal</button>
+          ${dup[0]?h`<button type="button" class="btn" disabled=${bz[0]} onClick=${function(){submit(true);}}>Tetap catat</button>`
+            :h`<button class="btn" disabled=${bz[0]||!pl[0]}>${bz[0]?'Menyimpan…':'Catat'}</button>`}
+        </div>
+      </form></${Sheet}>`:null}
+  </${Shell}>`;
+}
+preact.render(h`<${App}/>`,document.getElementById('app'));
+</script>
+</body></html>
